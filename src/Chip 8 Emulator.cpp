@@ -1,6 +1,7 @@
 ﻿#include "Chip 8 Emulator.h"
 #include <algorithm>
 #include <cstring>
+#include <cstdlib>
 #include <fstream>
 #include <filesystem>
 
@@ -111,6 +112,13 @@ void Chip8::execute(uint16_t opcode) {
 	uint16_t nnn = opcode & 0x0FFF;
 	uint8_t last = opcode & 0xF;
 
+	if ((opcode & 0xF000) == 0xE000) {
+		std::cout << "Key opcode: " << std::hex << opcode
+			<< " (checking key index V" << ((opcode >> 8) & 0xF)
+			<< " = " << (int)registers[(opcode >> 8) & 0xF] << ")\n";
+	}
+
+
 	switch (opcode & 0xF000) {
 	case 0x6000: { // LD Vx, kk
 		registers[x] = kk;
@@ -142,8 +150,7 @@ void Chip8::execute(uint16_t opcode) {
 	case 0x0000: { // System instructions
 		switch (opcode) {
 		case 0x00EE: { // RET
-			sp--;
-			pc = stack[sp];
+			pc = stack[--sp];
 			break;
 		}
 		case 0x00E0: { // CLS
@@ -215,6 +222,12 @@ void Chip8::execute(uint16_t opcode) {
 		}
 		break;
 	}
+	case 0xC000: { // RND Vx, byte
+		uint8_t rnd = rand() % 256;   // random 0–255
+		registers[x] = rnd & kk;
+		break;
+	}
+
 
 	case 0xD000: { // DRW Vx, Vy, nibble
 		uint8_t x = (opcode >> 8) & 0xF;
@@ -246,6 +259,67 @@ void Chip8::execute(uint16_t opcode) {
 		}
 		break;
 	}
+	case 0xE000: {
+		switch (kk) {
+		case 0x9E:
+			if (keypad[registers[x]] != 0) {
+				pc += 2;
+				break;
+			}
+		case 0xA1:
+			if (keypad[registers[x]] == 0) {
+				pc += 2;
+			}
+			break;
+		}
+		break;
+	}
+	case 0xF000: {
+		switch (kk) {
+		case 0x07: // LD Vx, DT
+			registers[x] = delayT;
+			break;
+
+		case 0x15: // LD DT, Vx
+			delayT = registers[x];
+			break;
+
+		case 0x18: // LD ST, Vx
+			soundT = registers[x];
+			break;
+
+		case 0x1E: // ADD I, Vx
+			index += registers[x];
+			break;
+
+		case 0x29: // LD F, Vx
+			index = FONTSET_START + (5 * registers[x]); // 5 bytes per font
+			break;
+
+		case 0x33: { // LD B, Vx (binary-coded decimal)
+			uint8_t value = registers[x];
+			memory[index + 0] = value / 100;
+			memory[index + 1] = (value / 10) % 10;
+			memory[index + 2] = value % 10;
+			break;
+		}
+
+		case 0x55: // LD [I], Vx (store registers V0..Vx in memory)
+			for (int i = 0; i <= x; ++i)
+				memory[index + i] = registers[i];
+			break;
+
+		case 0x65: // LD Vx, [I] (load registers V0..Vx from memory)
+			for (int i = 0; i <= x; ++i)
+				registers[i] = memory[index + i];
+			break;
+
+		default:
+			std::cout << "Unknown Fx** opcode: " << std::hex << opcode << std::endl;
+			break;
+		}
+		break;
+	}
 
 	default:
 		std::cout << "Unknown opcode: 0x" << std::hex << opcode << std::dec << "\n";
@@ -255,7 +329,6 @@ void Chip8::execute(uint16_t opcode) {
 
 void Chip8::cycle() {
 	uint16_t op = fetch();
-	std::cout << "Executing opcode: 0x" << std::hex << op << std::dec << "\n";
 	execute(op);
-	//timer later 
+	
 }

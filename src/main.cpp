@@ -4,35 +4,47 @@
 #include <thread>
 #include <iostream>
 
-int SDL_main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
     Chip8 chip;
     chip.reset();
 
+    
     chip.LoadROM("C:/Users/niran/source/repos/Chip 8 Emulator/roms/PONG2");
 
-    SDLFrontend sdl;
+    SDLFrontend frontend;
+    frontend.init();
 
-    if (!sdl.init()) {
-        return -1;
-    }
-    const int cycleRate = 500; // 500 Hz (500 instructions per second)
-    const int msPerCycle = 1000 / cycleRate;
+    const int INSTRUCTIONS_PER_FRAME = 5;     
+    const int TARGET_FPS = 60;
+    const auto frameDuration = std::chrono::milliseconds(1000 / TARGET_FPS);
+
+    using clock = std::chrono::high_resolution_clock;
+    auto lastFrame = clock::now();
 
     while (true) {
-        auto start = std::chrono::high_resolution_clock::now();
+        frontend.handleInput(chip);
 
-        chip.cycle(); // run one instruction
-
-        sdl.handleInput(chip);
-        sdl.draw(chip);
-        // display later
-
-        // maintain constant speed
-        auto end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double, std::milli> elapsed = end - start;
-        if (elapsed.count() < msPerCycle) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(msPerCycle) - elapsed);
+        // Run a few instructions per frame (controls CPU speed)
+        for (int i = 0; i < INSTRUCTIONS_PER_FRAME; ++i) {
+            chip.cycle();
         }
+
+        frontend.draw(chip);
+
+        // --- Update timers at 60 Hz ---
+        auto now = clock::now();
+        auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastFrame);
+        if (delta >= frameDuration) {
+            if (chip.delayT > 0) chip.delayT--;
+            if (chip.soundT > 0) {
+                chip.soundT--;
+                if (chip.soundT == 1) std::cout << "BEEP!\n";
+            }
+            lastFrame = now;
+        }
+
+        // --- Frame limiter ---
+        std::this_thread::sleep_for(frameDuration - delta);
     }
 
     return 0;
