@@ -255,6 +255,7 @@ void Chip8::execute(uint16_t opcode) {
 
 void Chip8::cycle() {
 	uint16_t op = fetch();
+	std::cout << "Executing opcode: 0x" << std::hex << op << std::dec << "\n";
 	execute(op);
 	//timer later 
 }
