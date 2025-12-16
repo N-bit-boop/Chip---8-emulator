@@ -13,6 +13,7 @@ public:
     void handleInput(Chip8& chip);
     void shutdown();
     void runTestWindow();
+    SDL_Renderer* getrender() const { return renderer;}
 
 private:
     SDL_Window* window = nullptr;

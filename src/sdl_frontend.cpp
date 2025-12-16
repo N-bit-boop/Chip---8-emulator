@@ -53,7 +53,7 @@ void SDLFrontend::handleInput(Chip8& chip) {
 			case SDLK_3: chip.keypad[0x3] = isPressed; break;
 			case SDLK_4: chip.keypad[0xC] = isPressed; break;
 
-			case SDLK_q: chip.keypad[0x1] = isPressed; break;
+			case SDLK_q: chip.keypad[0x4] = isPressed; break;
 			case SDLK_w: chip.keypad[0x5] = isPressed; break;
 			case SDLK_e: chip.keypad[0x6] = isPressed; break;
 			case SDLK_r: chip.keypad[0xD] = isPressed; break;

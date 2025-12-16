@@ -284,6 +284,23 @@ void Chip8::execute(uint16_t opcode) {
 			delayT = registers[x];
 			break;
 
+		case 0x0A: { // LD Vx, K (wait for a key press)
+			bool keyPressed = false;
+			for (int i = 0; i < 16; ++i) {
+				if (keypad[i] != 0) {
+					registers[x] = i;
+					keyPressed = true;
+					break;
+				}
+			}
+			if (!keyPressed) {
+				// Re-execute this opcode until a key is pressed
+				pc -= 2;
+			}
+			break;
+		}
+
+
 		case 0x18: // LD ST, Vx
 			soundT = registers[x];
 			break;
