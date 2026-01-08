@@ -1,5 +1,3 @@
-﻿# Chip---8-emulator
-
 # CHIP-8 Emulator
 CHIP-8 emulator written in C++ with an SDL2-based frontend to execute and render classic CHIP-8 programs (ROMs).  
 Implements the full fetch–decode–execute cycle, opcode handling, keyboard input mapping, and real-time graphics rendering.
@@ -79,3 +77,6 @@ ROM selection menu
 Debugger / step-through execution
 
 Save/load emulator state
+
+vbnet
+Copy code
